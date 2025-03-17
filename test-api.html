@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatNest API Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      button {
+        padding: 8px 16px;
+        margin-right: 10px;
+      }
+      .response {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ChatNest API Test</h1>
+
+    <h2>1. Register User</h2>
+    <button onclick="registerUser()">Register User</button>
+    <div id="register-response" class="response"></div>
+
+    <h2>2. Login</h2>
+    <button onclick="login()">Login</button>
+    <div id="login-response" class="response"></div>
+
+    <h2>3. Test API</h2>
+    <button onclick="testApi()">Test Public API</button>
+    <div id="test-response" class="response"></div>
+
+    <h2>4. Get Chat Rooms</h2>
+    <button onclick="getChatRooms()">Get Chat Rooms (Protected)</button>
+    <div id="rooms-response" class="response"></div>
+
+    <script>
+      // Store the JWT token
+      let token = "";
+      const API_BASE_URL = "http://localhost:8080";
+
+      // 顯示詳細錯誤資訊的函數
+      function displayError(element, error) {
+        console.error("Error:", error);
+        let errorMessage = error.message || "Unknown error";
+
+        if (error.status) {
+          errorMessage += ` (Status: ${error.status})`;
+        }
+
+        if (error.statusText) {
+          errorMessage += ` - ${error.statusText}`;
+        }
+
+        element.innerText = `Error: ${errorMessage}`;
+      }
+
+      // Register user
+      async function registerUser() {
+        const responseElement = document.getElementById("register-response");
+        responseElement.innerText = "Sending request...";
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              username: "testuser",
+              email: "test@example.com",
+              password: "password123",
+            }),
+            mode: "cors",
+          });
+
+          if (!response.ok) {
+            throw { status: response.status, statusText: response.statusText };
+          }
+
+          const data = await response.json();
+          responseElement.innerText = JSON.stringify(data, null, 2);
+        } catch (error) {
+          displayError(responseElement, error);
+        }
+      }
+
+      // Login
+      async function login() {
+        const responseElement = document.getElementById("login-response");
+        responseElement.innerText = "Sending request...";
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              username: "testuser",
+              password: "password123",
+            }),
+            mode: "cors",
+          });
+
+          if (!response.ok) {
+            throw { status: response.status, statusText: response.statusText };
+          }
+
+          const data = await response.json();
+          responseElement.innerText = JSON.stringify(data, null, 2);
+
+          if (data.token) {
+            token = data.token;
+          }
+        } catch (error) {
+          displayError(responseElement, error);
+        }
+      }
+
+      // Test public API
+      async function testApi() {
+        const responseElement = document.getElementById("test-response");
+        responseElement.innerText = "Sending request...";
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/chat/test`, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            mode: "cors",
+          });
+
+          if (!response.ok) {
+            throw { status: response.status, statusText: response.statusText };
+          }
+
+          const data = await response.json();
+          responseElement.innerText = JSON.stringify(data, null, 2);
+        } catch (error) {
+          displayError(responseElement, error);
+        }
+      }
+
+      // Get chat rooms (protected API)
+      async function getChatRooms() {
+        const responseElement = document.getElementById("rooms-response");
+        responseElement.innerText = "Sending request...";
+
+        if (!token) {
+          responseElement.innerText = "Please login first to get a token";
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/chat/rooms`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+            mode: "cors",
+          });
+
+          if (!response.ok) {
+            throw { status: response.status, statusText: response.statusText };
+          }
+
+          const data = await response.json();
+          responseElement.innerText = JSON.stringify(data, null, 2);
+        } catch (error) {
+          displayError(responseElement, error);
+        }
+      }
+    </script>
+  </body>
+</html>
